@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dossier Investigativo - Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #f4f1ea;
+            --ink: #1a1a1a;
+            --accent: #c0392b;
+            --border: #d4c9a8;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--ink);
+            font-family: 'IBM Plex Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #quiz-container {
+            background: var(--paper);
+            max-width: 700px;
+            width: 95%;
+            padding: 40px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            min-height: 400px;
+        }
+
+        #cover { text-align: center; }
+        .cover-image { max-width: 100%; height: auto; margin-bottom: 20px; border: 1px solid var(--ink); }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; text-transform: uppercase; margin-bottom: 10px; }
+        .subtitle { font-family: 'IBM Plex Mono', monospace; display: block; margin-bottom: 30px; color: var(--accent); font-weight: bold; }
+
+        #quiz-ui { display: none; }
+        .question-text { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 25px; line-height: 1.4; font-weight: 700; }
+        
+        .option-btn {
+            background: white;
+            border: 1px solid #ccc;
+            padding: 15px 20px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            transition: 0.2s;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+        .option-btn:hover { border-color: var(--accent); background: #fffcf5; }
+        .option-btn b { color: var(--accent); margin-right: 15px; font-family: 'IBM Plex Mono', monospace; }
+
+        #result-container { display: none; }
+        .result-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+        .result-motto { font-style: italic; font-weight: bold; margin-bottom: 20px; border-left: 4px solid var(--accent); padding-left: 15px; font-family: 'IBM Plex Mono', monospace; }
+        .result-desc { line-height: 1.6; font-size: 1rem; white-space: pre-line; margin-bottom: 20px; }
+
+        .btn-main {
+            background: var(--ink);
+            color: white;
+            padding: 15px 35px;
+            border: none;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .btn-main:hover { background: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="cover">
+        <img src="Copertina.png" class="cover-image" alt="Copertina" onerror="this.src='https://via.placeholder.com/600x300?text=Raccogli+gli+indizi'">
+        <h1>Raccogli gli indizi</h1>
+        <span class="subtitle">E ti dirò che giallo sei</span>
+        <button class="btn-main" onclick="startQuiz()">Apri Dossier</button>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="question-text" id="q-text"></div>
+        <div id="options-cont"></div>
+    </div>
+
+    <div id="result-container">
+        <div id="result-content"></div>
+        <button class="btn-main" style="margin-top:20px" onclick="location.reload()">Ricomincia</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "1. Entri nella stanza e noti una macchia scura sul tappeto. Cosa fai?",
+            a: [
+                { t: "Non tocco la prova, altrimenti potrebbe risultare invalida al processo!", p: 4 },
+                { t: "Analizzo gli schizzi per calcolare l’altezza da cui è caduta.", p: 5 },
+                { t: "Esamino tutti gli elementi della stanza: l’arredamento, gli oggetti…", p: 1 },
+                { t: "Chiamo subito la polizia per far isolare l'area: ho letto molti gialli e conosco le procedure!", p: 3 },
+                { t: "Provo a guardarmi attorno un attimo, non può fare male a nessuno e magari scopro qualcosa…", p: 2 }
+            ]
+        },
+        {
+            q: "2. Sul tavolo trovi alcuni oggetti fuori posto. Quale ti incuriosisce di più?",
+            a: [
+                { t: "Un’agenda piena di nomi e di indirizzi con note cifrate", p: 3 },
+                { t: "Un biglietto della tintoria e una chiave di una cassetta di sicurezza", p: 2 },
+                { t: "Uno smartphone con un database di contatti criptato.", p: 5 },
+                { t: "Una cartella di documenti tecnici di argomento amministrativo e finanziario", p: 4 },
+                { t: "Una vecchia pergamena con un sigillo in ceralacca spezzato.", p: 1 }
+            ]
+        },
+        {
+            q: "3. Qual è l'atmosfera che preferisci mentre \"indaghi\"?",
+            a: [
+                { t: "Un’aula di tribunale, dove ogni parola può fare la differenza.", p: 4 },
+                { t: "Un laboratorio dove i vetrini dicono più di mille testimoni.", p: 5 },
+                { t: "Un antico palazzo nobiliare illuminato dalle candele.", p: 1 },
+                { t: "La strada, tra il traffico della città e il caos della questura.", p: 3 },
+                { t: "Il salotto di una casa di provincia o il bancone di un bar locale.", p: 2 }
+            ]
+        },
+        {
+            q: "4. Il colpevole è scappato. Come speri di incastrarlo?",
+            a: [
+                { t: "Interpretando correttamente un’antica profezia o un documento d'archivio.", p: 1 },
+                { t: "Trovando la contraddizione fatale durante il controinterrogatorio.", p: 4 },
+                { t: "Isolando il DNA da un unico capello sulla scena del crimine.", p: 5 },
+                { t: "Esplorando le zone periferiche della città dove ho qualche “conoscenza”", p: 3 },
+                { t: "Seguendo il mio sesto senso e parlando con le persone giuste.", p: 2 }
+            ]
+        },
+        {
+            q: "5. Chi è il tuo compagno d'indagine ideale?",
+            a: [
+                { t: "La mia squadra investigativa e naturalmente…la mia pistola", p: 3 },
+                { t: "Un investigatore privato e naturalmente…il codice penale", p: 4 },
+                { t: "Un gruppo di vicini curiosi e naturalmente…una buona tazza di caffè", p: 2 },
+                { t: "I colleghi della sezione informatica e naturalmente…il mio laboratorio", p: 5 },
+                { t: "Studiosi che posso consultare “dal vivo” e naturalmente…la mia biblioteca", p: 1 }
+            ]
+        },
+        {
+            q: "6. Come deve essere descritto il delitto nel tuo libro?",
+            a: [
+                { t: "Voglio tutti i dettagli oggettivi, un’analisi accurata", p: 5 },
+                { t: "Voglio una storia che affondi le radici nella leggenda", p: 1 },
+                { t: "Voglio un rapporto professionale, con tutti i dettagli al posto giusto", p: 3 },
+                { t: "Voglio conoscere le procedure e vedere risolvere il processo", p: 4 },
+                { t: "Voglio una storia che mi racconti qualcosa delle persone coinvolte", p: 2 }
+            ]
+        },
+        {
+            q: "7. Nella tua carriera di investigatore preferisci…",
+            a: [
+                { t: "Indagare su crimini diversi, crescendo insieme alla tua squadra", p: 3 },
+                { t: "Vorrei un solo caso, unico nel suo genere e indimenticabile", p: 5 },
+                { t: "Una vicenda che sia grande romanzo storico che mi fa rivivere un'intera epoca", p: 1 },
+                { t: "Crimini “di paese” dove posso indagare con tutta la comunità", p: 2 },
+                { t: "Ogni caso è diverso e merita un'attenzione particolare ai dettagli", p: 4 }
+            ]
+        },
+        {
+            q: "8. Ti trovi di fronte a un testimone che mente. Come lo approcci?",
+            a: [
+                { t: "Gli ricordo le pene previste per falsa testimonianza.", p: 4 },
+                { t: "Cito un esempio storico con caratteristiche simili al presente.", p: 1 },
+                { t: "Gli sbatto sotto il naso il risultato di un test tossicologico.", p: 5 },
+                { t: "Lo porto in centrale per un interrogatorio formale.", p: 3 },
+                { t: "Gli offro qualcosa da bere per farlo sciogliere.", p: 2 }
+            ]
+        },
+        {
+            q: "9. Ti propongono un trasferimento (anche temporale!), dove andresti?",
+            a: [
+                { t: "La Sicilia dei vicoli o la Napoli verace dei commissariati.", p: 3 },
+                { t: "Una metropoli internazionale, dotata di tecnologie all’avanguardia.", p: 5 },
+                { t: "La Firenze del '300 o la Roma del periodo fascista.", p: 1 },
+                { t: "La nebbia della Pianura Padana o un paesino della Toscana.", p: 2 },
+                { t: "Gli uffici eleganti di una grande città e i palazzi di giustizia.", p: 4 }
+            ]
+        },
+        {
+            q: "10. Se potessi avere un \"superpotere\", quale sceglieresti?",
+            a: [
+                { t: "Conoscere tutte le lingue antiche e i segreti del passato.", p: 1 },
+                { t: "Sapere a memoria ogni codice e ogni sentenza mai scritta.", p: 4 },
+                { t: "Una vista ai raggi X per analizzare la materia.", p: 5 },
+                { t: "La capacità di leggere le emozioni sincere sul volto della gente.", p: 2 },
+                { t: "Un radar per individuare il crimine prima che avvenga.", p: 3 }
+            ]
+        },
+        {
+            q: "11. Un crimine su cui mi piacerebbe indagare sarebbe…",
+            a: [
+                { t: "Una faida familiare o un regolamento di conti mafioso.", p: 3 },
+                { t: "Un hackeraggio che mette in ginocchio una multinazionale.", p: 5 },
+                { t: "Un furto di un raro oggetto d’antiquariato.", p: 1 },
+                { t: "Un complotto che coinvolge le alte sfere del potere.", p: 4 },
+                { t: "Una sparizione misteriosa in una famiglia perbene.", p: 2 }
+            ]
+        },
+        {
+            q: "12. Come gestisci lo stress di un caso difficile?",
+            a: [
+                { t: "Bevo un altro caffè forte e controllo di nuovo i turni di pattuglia.", p: 3 },
+                { t: "Faccio una torta o mi dedico al giardinaggio per riflettere.", p: 2 },
+                { t: "Mi chiudo in palestra o davanti a uno schermo per ore.", p: 5 },
+                { t: "Studio una vecchia mappa o leggo un libro di filosofia.", p: 1 },
+                { t: "Mi preparo meticolosamente per l'arringa finale.", p: 4 }
+            ]
+        },
+        {
+            q: "13. L'indagine è a un punto morto. Cosa ti fa sbloccare?",
+            a: [
+                { t: "La scoperta di una firma digitale lasciata per errore.", p: 5 },
+                { t: "Il ritrovamento di un simbolo esoterico inciso su un muro.", p: 1 },
+                { t: "Una richiesta da parte del cliente di un colloquio privato.", p: 4 },
+                { t: "Una parola sentita per caso mentre faccio la spesa.", p: 2 },
+                { t: "Una soffiata ricevuto da un informatore fidato.", p: 3 }
+            ]
+        },
+        {
+            q: "14. Cosa cerchi in un compagno di indagini?",
+            a: [
+                { t: "Integrità morale e una dialettica che incanta.", p: 4 },
+                { t: "Una mente analitica e un equipaggiamento all'avanguardia.", p: 5 },
+                { t: "Saggezza, pazienza e un profondo senso del tempo.", p: 1 },
+                { t: "Coraggio fisico e un’umanità ruvida ma sincera.", p: 3 },
+                { t: "Curiosità inarrestabile e un po' di sana stravaganza.", p: 2 }
+            ]
+        },
+        {
+            q: "15. Qual è l'ultima sensazione che vuoi provare chiudendo il libro?",
+            a: [
+                { t: "Il sollievo che la legge sia stata ristabilita in strada.", p: 3 },
+                { t: "Il piacere intellettuale di una soluzione perfetta.", p: 5 },
+                { t: "La sensazione di aver vissuto un’altra epoca.", p: 1 },
+                { t: "La certezza che la verità sia emersa in aula.", p: 4 },
+                { t: "La voglia di invitare tutti a cena a casa mia.", p: 2 }
+            ]
+        }
+    ];
+
+    const profiles = {
+        1: {
+            title: "Il Detective Erudito",
+            motto: "Il presente è solo l'ultima pagina di un dossier d’indagine antichissimo.",
+            desc: "Sei un investigatore paziente e colto. Gli indizi che raccogli creano collegamenti trasversali e indagano tutto il sapere umano: storia, arte e medicina.\n\nQuando investighi sei l’esperto a cui tutti si rivolgono per consulenze riguardanti particolari remoti. Ti muovi meglio tra gli scaffali di una biblioteca o tra le mura di un palazzo nobiliare: ami i gialli ambientati nel passato che sanno evocare atmosfere che possiamo “vivere” solo attraverso la memoria.",
+            books: ["I delitti del mosaico (G. Leoni)", "Il senso del dolore (M. de Giovanni)", "La signorina Tecla Manzi (A. Vitali)"]
+        },
+        2: {
+            title: "L'investigatore della porta accanto",
+            motto: "Gli interrogatori che danno risultati si fanno al bar.",
+            desc: "Sei la persona più curiosa del quartiere. Non hai bisogno di un distintivo per capire che qualcosa non va: ti basta osservare come un vicino chiude la porta o ascoltare un pettegolezzo al mercato.\n\nNessun dettaglio è troppo banale per te. Cerchi nelle tue letture personaggi brillanti, un pizzico di ironia e quell'atmosfera rassicurante ma sempre in movimento delle piccole città.",
+            books: ["La briscola in cinque (M. Malvaldi)", "L'imprevedibile piano della scrittrice senza nome (A. Basso)", "Sabbia nera (C. Cassar Scalia)"]
+        },
+        3: {
+            title: "Il mastino di strada",
+            motto: "La legge si scrive nei verbali, ma la giustizia si difende sui marciapiedi.",
+            desc: "Sei un professionista onesto, ruvido e instancabile. Hai poche certezze inossidabili: il caffè della centrale fa schifo, ma lo beviamo tutti. Ti puoi fidare solo della tua squadra.\n\nTi piacciono le atmosfere un po’ ironiche e un po’ cupe del noir, non ti spaventano i racconti delle verità, spesso amare, della società moderna.",
+            books: ["La forma dell'acqua (A. Camilleri)", "I Bastardi di Pizzofalcone (M. de Giovanni)", "La verità dell'Alligatore (M. Carlotto)"]
+        },
+        4: {
+            title: "Avvocato, non giustiziere",
+            motto: "Un caso non è risolto finché il giudice non emette la sentenza.",
+            desc: "Sei una mente brillante che vive di logica, dialettica e codici. Per te il delitto è un paradosso normativo che si vince tra i faldoni di un ufficio legale o sotto le luci di un'aula di tribunale.\n\nNei gialli cerchi una precisione tecnica realistica, ti appassionano gli intrighi di potere e la tensione intellettuale che solo un dibattito processuale sa regalare.",
+            books: ["Testimone inconsapevole (G. Carofiglio)", "Ferro recente (M. Fois)", "Romanzo criminale (G. De Cataldo)"]
+        },
+        5: {
+            title: "Il chirurgo del crimine",
+            motto: "L'unico testimone affidabile è quello che posso analizzare in provetta.",
+            desc: "La gente parla di te come se fossi un computer. Hai hackerato la loro chat e sai che hanno ragione: sei analitico e tecnologicamente imbattibile.\n\nLa scena del crimine è un laboratorio: non ti interessano le emozioni, ma ciò che dicono i vetrini al microscopio. Ti piace leggere gialli dal ritmo serrato, dove i tecnici forensi svelano verità nascoste combinando diversi livelli di analisi.",
+            books: ["Il suggeritore (D. Carrisi)", "Almost Blue (C. Lucarelli)", "Fiori sopra l'inferno (I. Tuti)"]
+        }
+    };
+
+    let currentQ = 0;
+    let scores = { 1:0, 2:0, 3:0, 4:0, 5:0 };
+
+    function startQuiz() {
+        document.getElementById('cover').style.display = 'none';
+        document.getElementById('quiz-ui').style.display = 'block';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const qData = questions[currentQ];
+        document.getElementById('q-text').innerText = qData.q;
+        const cont = document.getElementById('options-cont');
+        cont.innerHTML = '';
+        
+        qData.a.forEach((opt, index) => {
+            const b = document.createElement('button');
+            b.className = 'option-btn';
+            b.innerHTML = `<b>${String.fromCharCode(65+index)}</b> ${opt.t}`;
+            b.onclick = () => {
+                scores[opt.p]++;
+                currentQ++;
+                if(currentQ < questions.length) showQuestion();
+                else showResult();
+            };
+            cont.appendChild(b);
+        });
+    }
+
+    function showResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        const resCont = document.getElementById('result-container');
+        const content = document.getElementById('result-content');
+        resCont.style.display = 'block';
+
+        let winner = 1; let max = 0;
+        for(let pId in scores) { if(scores[pId] > max) { max = scores[pId]; winner = pId; } }
+
+        const p = profiles[winner];
+        const imgPath = "profilo" + winner + ".png";
+
+        content.innerHTML = `
+            <img src="${imgPath}" class="cover-image" onerror="this.style.display='none'">
+            <div class="result-title">${p.title}</div>
+            <div class="result-motto">"${p.motto}"</div>
+            <div class="result-desc">${p.desc}</div>
+            <div style="background:#e8dfc8; padding:20px; border:1px dashed #1a1a1a; margin-top:20px;">
+                <p><b>📖 Letture consigliate per te:</b></p>
+                <ul style="padding-left:20px; line-height:1.6;">
+                    ${p.books.map(b => `<li>${b}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+</script>
+</body>
+</html>
